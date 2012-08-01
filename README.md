@@ -1,3 +1,7 @@
+# Usage
+
+`curl http://bixi.herokuapp.com`
+
 # Warning
 
 Bixi does not provide an official API for querying station data. This application
