@@ -7,8 +7,6 @@ Bundler.require
 
 ['parser.rb', 'cache.rb'].each {|file| require File.join(APP_DIR, file) }
 
-Bixi::Cache.expiry = 5
-
 def fetch_json
   data = open('https://montreal.bixi.com/maps/statajax').read
   parser = Bixi::Parser.new(data)
