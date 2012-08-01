@@ -1,4 +1,5 @@
-bixi
-====
+# Warning
 
-Scrape Bixi station data and return it as JSON
+Bixi does not provide an official API for querying station data. This application
+relies on parsing javascript from `https://montreal.bixi.com/maps/statajax`,
+which may change without notice.
