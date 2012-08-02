@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bixi Map</title>
+  <meta name='viewport' content='width=device-width'>
+  <style>
+    html, body, #map {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id='map'></div>
+  <script type='text/javascript' src='https://maps.googleapis.com/maps/api/js?sensor=false'></script>
+  <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js'></script>
+  <script type='text/javascript'>
+    $(function(){
+      var map;
+
+      function initializeMap(data) {
+        navigator.geolocation.getCurrentPosition(function(position){
+          var mapOptions = {
+            zoom: 16,
+            center: new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+          };
+
+          map = new google.maps.Map(document.getElementById('map'), mapOptions);
+
+          var marker, i, station;
+
+          for (i = 0; i < data.length; i++) {
+            station = data[i];
+            marker = new google.maps.Marker({
+              position: new google.maps.LatLng(station['lat'], station['long']),
+              map: map
+            });
+          }
+        });
+      }
+
+      $.getJSON('/montreal', function(data){ initializeMap(data); });
+    });
+
+  </script>
+</body>
+</html>
