@@ -1,10 +1,14 @@
-# Usage
+# Sample Web App
 
-`curl http://bixi.herokuapp.com/montreal`
+http://bixi.herokuapp.com/map.html (Montreal)
 
-`curl http://bixi.herokuapp.com/ottawa`
+# API Usage
 
-`curl http://bixi.herokuapp.com/toronto`
+http://bixi.herokuapp.com/montreal
+
+http://bixi.herokuapp.com/ottawa
+
+http://bixi.herokuapp.com/toronto
 
 # Warning
 
