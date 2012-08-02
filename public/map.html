@@ -6,46 +6,211 @@
   <meta name='apple-mobile-web-app-capable' content='yes'/>
   <link rel="apple-touch-icon-precomposed" href="icon.png"/>
   <style>
-    html, body, #map {
+    * {
+      -moz-box-sizing: border-box;
+      -webkit-box-sizing: border-box;
+      box-sizing: border-box;
+    }
+
+    html, body {
       margin: 0;
       padding: 0;
       height: 100%;
+      font-family: 'Helvetica';
+    }
+
+    #container {
+      height: 100%;
+      padding-top: 40px;
+      position: relative;
+    }
+
+    #map {
+      height: 100%;
+    }
+
+    #menu {
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding: 5px;
+      box-shadow: 0px 0px 10px black;
+      z-index: 10;
+      width: 100%;
+      height: 40px;
+      background: white;
+    }
+
+    .button {
+      height: 30px;
+      line-height: 30px;
+      display: inline-block;
+      margin: 0;
+      padding: 0 10px;
+      text-decoration: none;
+      color: inherit;
+      background: #add8e6;
+      opacity: 0.5;
+    }
+
+    .button.current {
+      opacity: 1;
+    }
+
+    .button[data-action='center-location'] {
+      opacity: 1;
+      float: right;
+      font-size: 30px;
+      background: white;
+      color: #add8e6;
+      padding: 0;
     }
   </style>
 </head>
 <body>
-  <div id='map'></div>
+  <div id='container'>
+    <div id='menu'>
+      <a class='button' href='#' data-action='show-bikes'>Bikes</a>
+      <a class='button' href='#' data-action='show-docks'>Docks</a>
+      <a class='button' href='#' data-action='center-location'>&otimes;</a>
+    </div>
+    <div id='map'></div>
+  </div>
+
   <script type='text/javascript' src='https://maps.googleapis.com/maps/api/js?sensor=false'></script>
   <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js'></script>
   <script type='text/javascript'>
     $(function(){
-      var map;
+      var map, userPosition, stations;
+      var markers = [];
 
-      function initializeMap(data) {
+      function initializeMap(callback) {
         navigator.geolocation.getCurrentPosition(function(position){
+          userPosition = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+
           var mapOptions = {
             zoom: 16,
-            center: new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
+            center: userPosition,
             mapTypeId: google.maps.MapTypeId.ROADMAP
           };
 
           map = new google.maps.Map(document.getElementById('map'), mapOptions);
 
-          var marker, i, station;
+          new google.maps.Marker({
+            position: new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
+            map: map
+          });
 
-          for (i = 0; i < data.length; i++) {
-            station = data[i];
-            marker = new google.maps.Marker({
-              position: new google.maps.LatLng(station['lat'], station['long']),
-              map: map
-            });
-          }
+          if (typeof(callback) == 'function') { callback(); }
         });
       }
 
-      $.getJSON('/montreal', function(data){ initializeMap(data); });
-    });
+      function addMarkers(type) {
+        type || (type = 'bikes');
+        var marker, i, station, count;
 
+        for (i = 0; i < stations.length; i++) {
+          station = stations[i];
+          if (type == 'bikes') {
+            count = station.nbBikes;
+          } else {
+            count = station.nbEmptyDocks;
+          }
+          marker = new google.maps.Marker({
+            position: new google.maps.LatLng(station['lat'], station['long']),
+            icon: mapPin(count),
+            map: map
+          });
+          markers.push(marker);
+        }
+      }
+
+      function clearMarkers() {
+        var marker, i;
+        for (i = 0; i < markers.length; i++) { markers[i].setMap(null); }
+      }
+
+      function mapPin(count) {
+        var canvas = document.createElement('canvas');
+        var ctx    = canvas.getContext('2d');
+        canvas.setAttribute('width', '30px');
+        canvas.setAttribute('height', '30px');
+
+        // Main Rectangle
+        ctx.fillStyle = "#add8e6";
+        ctx.fillRect (0, 0, 30, 22);
+
+        // Bottom Triangle
+        ctx.moveTo(10, 22);
+        ctx.beginPath();
+        ctx.lineTo(15, 30);
+        ctx.lineTo(20, 22);
+        ctx.lineTo(10, 22);
+        ctx.closePath();
+        ctx.fill()
+
+        // Border
+        ctx.strokeStyle = '#3e4e54';
+        ctx.lineWidth = 1;
+        ctx.moveTo(0, 0);
+        ctx.beginPath();
+        ctx.lineTo(30, 0);
+        ctx.lineTo(30, 22);
+        ctx.lineTo(20, 22);
+        ctx.lineTo(15, 30);
+        ctx.lineTo(10, 22);
+        ctx.lineTo(0, 22);
+        ctx.lineTo(0, 0);
+        ctx.closePath();
+        ctx.stroke();
+
+        // Text
+        ctx.font = "14px Helvetica";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "black";
+        ctx.fillText(count.toString(), 15, 16);
+
+        return canvas.toDataURL('image/png');
+      }
+
+      function initializeBehavior() {
+        $('[data-action="show-bikes"]').addClass('current');
+
+        function toggleType(type) {
+          $('[data-action|="show"]').removeClass('current');
+          clearMarkers();
+          setTimeout(function(){
+            addMarkers(type);
+          }, 100);
+        }
+
+        $('[data-action="show-bikes"]').click(function(e){
+          e.preventDefault();
+          toggleType('bikes');
+          $(this).addClass('current');
+        });
+
+        $('[data-action="show-docks"]').click(function(e){
+          e.preventDefault();
+          toggleType('docks');
+          $(this).addClass('current');
+        });
+
+        $('[data-action="center-location"]').click(function(e){
+          e.preventDefault();
+          map.setZoom(16);
+          map.setCenter(userPosition);
+        });
+      }
+
+      initializeMap(function(){
+        $.getJSON('/montreal', function(data){
+          stations = data;
+          addMarkers();
+          initializeBehavior();
+        });
+      });
+    });
   </script>
 </body>
 </html>
