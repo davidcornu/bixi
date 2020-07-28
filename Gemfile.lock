@@ -3,7 +3,7 @@ GEM
   specs:
     daemons (1.1.8)
     eventmachine (0.12.10)
-    json (1.6.5)
+    json (2.3.0)
     rack (1.4.1)
     rack-protection (1.2.0)
       rack
